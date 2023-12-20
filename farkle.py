@@ -3,7 +3,7 @@
 # =============================================================================
 import pandas as pd
 import numpy as np
-import matplotlib as plt
+#import matplotlib as plt
 
 # =============================================================================
 # Import Section End
@@ -13,7 +13,7 @@ import matplotlib as plt
 
 def die_roll(dice = 1):
     result = pd.Series(np.random.randint(1,6,6))
-    score, roll_dice = score_check(result)
+    score = score_check(result)
     return score, result
 
 def farkle_check(score):
@@ -56,28 +56,28 @@ def score_check(result):
     if len(result) == 6:
         if value_counts.iloc[0] == 6:
             score = 3000
-            return score, 6
+            return score
         elif value_counts.iloc[0] == 3 and value_counts.iloc[1] == 3:
             score = 2500
-            return score, 6
+            return score
         elif value_counts.iloc[0] == 4 and value_counts.iloc[1] == 2:
             score = 1500
-            return score, 6
+            return score
         elif value_counts.iloc[0] == 2 and value_counts.iloc[1] == 2 and value_counts.iloc[2] == 2:
             score = 1500
-            return score, 6
+            return score
         elif sorted(result) == [1,2,3,4,5,6]:
             score = 1500
-            return score, 6
-        score, roll_dice = check_5(value_counts, score)
+            return score
+        score = check_5(value_counts, score)
         if score > 0:
-            return score, roll_dice
+            return score
         score += check_4(value_counts, score)
         if score > 0:
-            return score, roll_dice
+            return score
         score += check_3(value_counts, score)
         if score > 0:
-            return score, roll_dice
+            return score
         if 1 in value_counts.index[1:]:
             score += 100*value_counts[1]
         if 5 in value_counts.index[1:]:

@@ -151,7 +151,8 @@ def score_check(result, dice):
 def play_a_round(score, roll_dice):
     results = pd.DataFrame([die_roll(roll_dice)], columns = ['Score', 'Result', 'Dice Avail'] )
     dice_avail = results['Dice Avail'].values[0]
-    while roll_dice > dice_avail and results['Score'].cumsum().tail(1).values[0]:
+    threshold = .10
+    while roll_dice > dice_avail and score_risk[roll_dice]*(1-farkle_risk[roll_dice]) > results['Score'].cumsum().tail(1).values[0]*threshold:
         roll_dice = dice_avail
         if roll_dice == 0:
             roll_dice = 6
@@ -170,6 +171,10 @@ def score_analyzer(score, roll_dice):
     mc['Farkle %'] = farkle_chance*100
     return mc
 #%%
+
+farkle_risk = {6:.023, 5:.079, 4:.16, 3:.2808, 2:.4444, 1:.6667}
+score_risk = {6:650, 5:400, 4:300, 3:200, 2: 150, 1:50}
+calc_risk = {6:635, 5:368, 4:252, 3:144, 2:83, 1:17}
 score = int(input("Enter current score:"))
 roll_dice = int(input("Enter dice available to roll:"))
 
@@ -178,6 +183,3 @@ results = score_analyzer(score, roll_dice)
 results['Current Score'] = score
 results = results[['Current Score', 'Poss Score', 'Score %', 'Farkle %']]
 print(results)
-
-farkle_risk = {6:.023, 5:.079, 4:.1602, 3:.2808, 2:.4444, 1:.6667}
-score_risk = {6:650, 5:400, 4:300, 3:200, 2: 150, 1:50}

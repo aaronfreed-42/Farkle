@@ -70,6 +70,7 @@ def check_3(value_counts, score, dice_avail):
             dice_avail -= value_counts[1]
         if 5 in value_counts.index[1:]:
             score += 50*value_counts[5]
+            dice_avail -= value_counts[5]
     return score, dice_avail
 
 def check_21(value_counts, score, dice_avail):
@@ -149,16 +150,20 @@ def score_check(result, dice):
          return score, dice_avail
 
 def play_a_round(score, roll_dice):
-    results = pd.DataFrame([die_roll(roll_dice)], columns = ['Score', 'Result', 'Dice Avail'] )
+    results = pd.DataFrame([die_roll(roll_dice)], columns = ['Score', 'Result', 'Dice Avail'])
     dice_avail = results['Dice Avail'].values[0]
-    threshold = .10
-    while roll_dice > dice_avail and score_risk[roll_dice]*(1-farkle_risk[roll_dice]) > results['Score'].cumsum().tail(1).values[0]*threshold:
+    
+    while roll_dice > dice_avail:
         roll_dice = dice_avail
         if roll_dice == 0:
             roll_dice = 6
+        if roll_dice < 6 and results['Score'].cumsum().tail(1).values[0]*(threshold[roll_dice]) > calc_risk[roll_dice]:
+            break
         results = pd.concat([results, pd.DataFrame([die_roll(roll_dice)], columns = ['Score', 'Result', 'Dice Avail'])])
         dice_avail = results.tail(1)['Dice Avail'].values[0]
     results['Cum Score'] = results['Score'].cumsum()
+    if results['Score'].tail(1).values[0] == 0:
+        return 0
     return results['Cum Score'].tail(1).values[0]
 
 def score_analyzer(score, roll_dice):
@@ -169,17 +174,19 @@ def score_analyzer(score, roll_dice):
     mc['Poss Score'] = poss_score
     mc['Score %'] = score_chance*100
     mc['Farkle %'] = farkle_chance*100
-    return mc
+    return mc[['Poss Score', 'Score %', 'Farkle %']].drop_duplicates()
+
 #%%
 
 farkle_risk = {6:.023, 5:.079, 4:.16, 3:.2808, 2:.4444, 1:.6667}
-score_risk = {6:650, 5:400, 4:300, 3:200, 2: 150, 1:50}
+score_risk = {6:650, 5:400, 4:300, 3:200, 2:150, 1:50}
 calc_risk = {6:635, 5:368, 4:252, 3:144, 2:83, 1:17}
+threshold = {6:1.1, 5:1.8, 4:1.8, 3:1.8, 2:.8, 1:1.10}
 score = int(input("Enter current score:"))
 roll_dice = int(input("Enter dice available to roll:"))
 
-#results = pd.DataFrame([play_a_round(score, roll_dice)], columns = ['Poss Score', 'Score %', 'Farkle %'])
-results = score_analyzer(score, roll_dice)
-results['Current Score'] = score
-results = results[['Current Score', 'Poss Score', 'Score %', 'Farkle %']]
-print(results)
+results = pd.DataFrame(score_analyzer(score, roll_dice), columns = ['Poss Score', 'Score %', 'Farkle %'])
+#%%
+
+
+results.plot.line(y =['Poss Score', 'Farkle %'])
